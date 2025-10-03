@@ -10,12 +10,26 @@ import PaginationControls from './PaginationControls';
 import Logo from './Logo';
 import BookmarksButton from './BookmarksButton';
 import SearchForm from './SearchForm';
-import { useJobItems } from '../lib/hooks';
+import {
+  useActiveId,
+  useDebounce,
+  useJobDetail,
+  useJobItems,
+} from '../lib/hooks';
 import { useState } from 'react';
+import JobItemContent from './JobItemContent';
 
 function App() {
   const [searchText, setSearchText] = useState('');
-  const [jobItems, isLoading] = useJobItems(searchText);
+  // debounce the search text input to avoid excessive network requests
+  // the search text will only be updated after 250ms of inactivity
+  const debouncedSearchText = useDebounce(searchText, 250);
+  const { jobItemsSlice: jobItems, isLoading } =
+    useJobItems(debouncedSearchText);
+  const activeId = useActiveId();
+
+  // the colon syntax is a way to rename the variable while destructuring
+  const { jobDetails, isLoading: jobDetailsIsLoading } = useJobDetail(activeId);
 
   return (
     <>
@@ -39,6 +53,11 @@ function App() {
 
           <PaginationControls />
         </Sidebar>
+
+        <JobItemContent
+          jobDetails={jobDetails}
+          isLoading={jobDetailsIsLoading}
+        />
       </Container>
       <Footer />
     </>
